@@ -26,7 +26,7 @@ public class NightpathBuilderEditor : Editor
 
         var navigationWorld = _nightPathBuilder.navigationWorld;
 
-        if (navigationWorld is null) return;
+        if (navigationWorld is null) goto end;
 
         var radiusOk = navigationWorld.tileRadius > 0;
         var maskOk = navigationWorld.wallMask != 0;
@@ -109,12 +109,9 @@ public class NightpathBuilderEditor : Editor
 
         var isBuilding = _nightPathBuilder.IsBuilding;
 
-        var isPlay = EditorApplication.isPlayingOrWillChangePlaymode;
-
         GUI.enabled = navigationWorld.wallMask != 0
                       && !isBuilding
-                      && radiusOk
-                      && isPlay;
+                      && radiusOk;
 
         if (GUILayout.Button(isBuilding ? BuildingLabel : "Build", GUILayout.Height(30)))
         {
@@ -125,12 +122,6 @@ public class NightpathBuilderEditor : Editor
         }
 
         GUI.enabled = radiusOk && maskOk;
-
-        if (!isPlay)
-        {
-            EditorGUILayout.HelpBox(
-                "You need to start game before build the path.", MessageType.Info);
-        }
 
         Color originalColor = GUI.backgroundColor; // Store the original background color
 
@@ -184,6 +175,8 @@ public class NightpathBuilderEditor : Editor
         {
             GUILayout.Label("Total: " + total + " milliseconds.");
         }
+        
+        end:
 
         EditorUtility.SetDirty(target);
         serializedObject.ApplyModifiedProperties();

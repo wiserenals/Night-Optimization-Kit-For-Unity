@@ -1,3 +1,4 @@
+using DotTrail;
 using UnityEngine;
 
 public class NOK_NightPathBridgeAgent : MonoBehaviour, IOptimizedAgentComponent
@@ -11,19 +12,35 @@ public class NOK_NightPathBridgeAgent : MonoBehaviour, IOptimizedAgentComponent
     {
         nativePosition = position;
         if (isActive) return;
-        //gameObject.SetActive(true);
+        isActive = true;
+        gameObject.SetActive(true);
         _transform.position = position;
     }
 
     private void Awake()
     {
         _transform = transform;
+        MoveJob();
     }
 
-    private void Update()
+    /// <summary>
+    /// WARNING: This is a job execution. Do not edit if you don't know about parallel programming.
+    /// </summary>
+    private void MoveJob()
     {
-        isActive = gameObject.activeSelf;
-        _transform.position = Vector3.Lerp(_transform.position, nativePosition, Time.deltaTime * smoothTime);
+        Vector3 position = _transform.position;
+        Quaternion rotation = _transform.rotation;
+        Dot.Trail.Loop("BridgeAgentThread", deltaTime =>
+        {
+            position = Vector3.Lerp(position, nativePosition, deltaTime * smoothTime);
+            rotation = Quaternion.Lerp(rotation, 
+                Quaternion.LookRotation(nativePosition - position, Vector3.up), deltaTime);
+            if (Vector3.Distance(position, nativePosition) > 2.5f) position = nativePosition;
+        }, () =>
+        {
+            _transform.position = position;
+            _transform.rotation = rotation;
+        });
     }
 
 }

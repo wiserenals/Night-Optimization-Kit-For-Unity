@@ -10,7 +10,24 @@ public class Nightpool
 
     public readonly List<Cullable> cullables = new();
     
-    [SerializeField] [ReadOnly] private PoolDebug poolDebug;
+    [SerializeField] [ReadOnly] private PoolDebug poolDebug = new PoolDebug();
+
+    public void Add(IEnumerable<GameObject> gameObjects)
+    {
+        foreach (GameObject gameObject in gameObjects)
+        {
+            Add(gameObject);
+        }
+    }
+
+    public void Add(GameObject gameObject)
+    {
+        if (!gameObject) return;
+        AllTransforms.Add(gameObject.transform);
+        var components = gameObject.GetComponentsInChildren<Cullable>();
+        if(components != null) 
+            foreach (var component in components) cullables.Add(component);
+    }
     
     public List<GameObject> Instantiate(GameObject prefab, int count, bool disableDirect = false)
     {

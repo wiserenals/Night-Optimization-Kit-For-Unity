@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using NightJob;
+using UnityEngine;
 
+[ExecuteAlways]
 public class NightJobManager : ForceProtectedSingleton<NightJobManager>
 {
     public readonly List<NightJobQueue> AllQueue = new List<NightJobQueue>();

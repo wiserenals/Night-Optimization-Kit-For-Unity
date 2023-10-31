@@ -7,6 +7,7 @@ using UnityEngine;
 [ExecuteAlways]
 public class NightCullCamera : Singleton<NightCullCamera>
 {
+    public string collectionTag;
     public CullingProperties cullingProperties;
     public CullingArea cullingArea;
 
@@ -16,10 +17,110 @@ public class NightCullCamera : Singleton<NightCullCamera>
 
     private Vector3 CamPosition => _transform.position + transform.forward * cullingArea.distance;
 
-    private void Start()
+    private void Awake()
     {
+        cullingPool = new Nightpool();
         _transform = transform;
+        if (!string.IsNullOrWhiteSpace(collectionTag))
+        {
+            var found = GameObject.FindGameObjectsWithTag(collectionTag);
+            if(found != null) cullingPool.Add(found);
+        }
         CreateCullingLoop();
+    }
+
+    private List<T> Cull<T>(List<T> objects, Func<T, Vector3> getPosition)
+    {
+        List<T> result = new List<T>();
+    
+        var camPosition = CamPosition;
+        var center = CalculateCenterOfCullingArea();
+        var radius = cullingArea.radius;
+    
+        if (!cullingProperties.areaCulling)
+        {
+            return objects;
+        }
+    
+        var available = objects
+            .FindAll(x => Vector3.Distance(center, getPosition(x)) < radius);
+
+        if (!cullingProperties.distanceCulling)
+        {
+            return available;
+        }
+    
+        var ordered = available
+            .OrderBy(x => Vector3.Distance(camPosition, getPosition(x))).ToList();
+
+        if (cullingProperties.raycastCulling)
+        {
+            var shift = cullingProperties.raycastShift;
+            RaycastHit hitInfo;
+            foreach (var obj in ordered)
+            {
+                if (obj is Cullable cullable) MakeRayC(cullable);
+                else MakeRay(getPosition(obj));
+
+                void MakeRay(Vector3 pos)
+                {
+                    var direction = camPosition - pos;
+                    var rayMax = direction.magnitude - shift;
+                    var isHit = Physics.Raycast(camPosition,
+                        direction,
+                        out hitInfo,
+                        rayMax,
+                        cullingProperties.layers);
+                    if (!isHit)
+                    {
+                        result.Add(obj);
+                        return;
+                    }
+                }
+
+                void MakeRayC(Cullable cullableToRay)
+                {
+                    var points = cullableToRay.raycastPoints;
+                    foreach (var point in points)
+                    {
+                        var direction = point.position - camPosition + cullable.Position;
+                        var rayMax = direction.magnitude - shift;
+                        bool isHit = Physics.Raycast(camPosition,
+                            direction,
+                            out hitInfo,
+                            rayMax,
+                            cullingProperties.layers);
+                        if (!isHit)
+                        {
+                            result.Add(obj);
+                            return;
+                        }
+                    }
+
+                }
+            }
+        }
+        else result = ordered;
+
+        if (cullingProperties.limitCulling)
+            result = result.Take(cullingProperties.maxActiveLimit).ToList();
+
+        return result;
+    }
+
+    public List<Cullable> CullObjects(List<Cullable> cullables)
+    {
+        return Cull(cullables, c => c.Position);
+    }
+
+    public List<Vector3> CullPositions(List<Vector3> positions)
+    {
+        return Cull(positions, p => p);
+    }
+    
+    public List<Vector2> CullPositions(List<Vector2> positions)
+    {
+        return Cull(positions, p => new Vector3(p.x, 0, p.y));
     }
 
     private void CreateCullingLoop()
@@ -31,72 +132,15 @@ public class NightCullCamera : Singleton<NightCullCamera>
 
     private void CullingLoop()
     {
-        var result = new List<Cullable>();
-        
-        var camPosition = CamPosition;
-        var center = CalculateCenterOfCullingArea();
-        var radius = cullingArea.radius;
-        
         var all = cullingPool.cullables;
-        
-        if (!cullingProperties.areaCulling)
-        {
-            result = all;
-            goto Enabling;
-        }
-        
+    
+        var result = Cull(all, c => c.Position);
+    
         foreach (var cullable in all)
         {
-            if(!cullable) continue;
             cullable.gameObject.SetActive(false);
         }
         
-        var available = all
-            .FindAll(x => Vector3.Distance(center, x.Position) < radius);
-
-        if (!cullingProperties.distanceCulling)
-        {
-            result = available;
-            goto Enabling;
-        }
-        
-        var ordered = available
-            .OrderBy(x => Vector3.Distance(camPosition, x.Position)).ToList();
-
-        if (cullingProperties.limitCulling)
-            ordered = ordered.Take(cullingProperties.maxActiveLimit).ToList();
-
-        if (!cullingProperties.raycastCulling)
-        {
-            result = ordered;
-            goto Enabling;
-        }
-
-        var shift = cullingProperties.raycastShift;
-        var rayMax = radius * 2;
-        RaycastHit hitInfo;
-        foreach (var cullable in ordered)
-        {
-            var pos = cullable.Position;
-            var willActive = false;
-            foreach (var raycastPoint in cullable.raycastPoints)
-            {
-                var direction = (pos + raycastPoint.position) - camPosition;
-                var isHit = Physics.Raycast(camPosition, 
-                    direction, 
-                    out hitInfo, 
-                    rayMax, 
-                    cullingProperties.layers);
-                if (!isHit
-                    || hitInfo.distance >= direction.magnitude - shift) 
-                    willActive = true;
-            }
-            cullable.gameObject.SetActive(willActive);
-        }
-
-        return;
-        
-        Enabling:
         foreach (var cullable in result)
         {
             cullable.gameObject.SetActive(true);

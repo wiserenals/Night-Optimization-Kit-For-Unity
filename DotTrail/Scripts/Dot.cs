@@ -86,6 +86,13 @@ namespace DotTrail
             return this;
         }
         
+        /// <summary>
+        /// IMPORTANT: You must use .Parallel() if you want to continue execution if you are executing this forever.
+        /// </summary>
+        /// <param name="loopFunc"></param>
+        /// <param name="seconds"></param>
+        /// <param name="secondThread"></param>
+        /// <returns></returns>
         public Dot Loop(Func<bool> loopFunc, float seconds, bool secondThread = false)
         {
             if (secondThread) After(async _ =>
@@ -113,6 +120,7 @@ namespace DotTrail
                     await Task.Delay(milliseconds);
                 }
             });
+            Parallel();
             return this;
         }
 
@@ -145,7 +153,6 @@ namespace DotTrail
                 }
 
                 possible.started = true;
-
                 After(async _ =>
                 {
                     timer.Start();
@@ -155,7 +162,6 @@ namespace DotTrail
                         deltaTime = (float)timer.Elapsed.TotalSeconds;
 
                         timer.Restart();
-
                         possible.secondThread(deltaTime);
 
                         try

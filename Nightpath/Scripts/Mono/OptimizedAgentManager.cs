@@ -33,10 +33,24 @@ public class OptimizedAgentManager : ExpandedBehaviour
     #if UNITY_EDITOR
         private void OnDrawGizmos()
         {
+            if (NightJobManager.gamePlaying)
+            {
+                const int times = 333;
+                var dv = agents.Count / times;
+                for (int i = 0; i < agents.Count; i += dv)
+                {
+                    var agent = agents[i];
+                    var agentV3 = new Vector3(agent.x, 0, agent.y);
+                    Gizmos.DrawLine(agentV3, agentV3 + Vector3.up * 1000);
+                }
+
+                return;
+            }
             if (!debuggingSettings.drawDebugging
                 || !agents.Any()
                 || !drawGizmosTrigger) return;
-            
+
+
             if (agents.Count <= selectedIndex) return;
             
             Gizmos.color = Color.red;

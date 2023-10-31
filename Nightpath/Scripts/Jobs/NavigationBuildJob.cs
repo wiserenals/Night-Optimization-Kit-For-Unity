@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using NightJob;
-using NOK;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class NavigationBuildJob : INightJob
 {
@@ -16,9 +18,9 @@ public class NavigationBuildJob : INightJob
     public bool bake;
     public bool delayedObstacleBuild;
     public float obstacleBuildDelay;
-    
+
     //generated
-    public float tileRadius  { get; private set; }
+    public float tileRadius { get; private set; }
     public Vector3 nodeSize { get; private set; }
     public NavigationTile[,] tiles { get; private set; }
     public float tileDiameter { get; private set; }
@@ -32,6 +34,14 @@ public class NavigationBuildJob : INightJob
 
     private Vector3 additionalPosition;
 
+    private bool isPlay =>
+#if UNITY_EDITOR
+        EditorApplication.isPlayingOrWillChangePlaymode;
+#else
+        true;
+#endif
+
+
     public IEnumerator OnMainThread()
     {
         yield return null;
@@ -44,10 +54,10 @@ public class NavigationBuildJob : INightJob
         tileCreationTimer = new Stopwatch();
         heatmapCreationTimer = new Stopwatch();
         flowFieldCreationTimer = new Stopwatch();
-        
+
         tileRadius = navigationWorld.tileRadius;
         nodeSize = Vector3.one * (tileRadius * 2);
-        
+
         tileDiameter = tileRadius * 2;
 
         bake = bake || latestWalls == null;
@@ -58,20 +68,20 @@ public class NavigationBuildJob : INightJob
 
         latestWalls ??= navigationWorld.navInstance?.Wall;
 
-        var navInstance = navigationWorld.navInstance 
+        var navInstance = navigationWorld.navInstance
             = new NavigationWorldInstance(
-                gridSizeX, 
-                gridSizeY, 
+                gridSizeX,
+                gridSizeY,
                 latestWalls
-                );
-        
+            );
+
         #region CreateTileRegion
 
         tileCreationTimer.Start();
-        
+
         Vector3 gridCenter = new Vector3(worldSize.x * 0.5f, 0, worldSize.y * 0.5f);
-        additionalPosition = position - gridCenter;    
-        
+        additionalPosition = position - gridCenter;
+
         var tempNodeArray = new NavigationTile[gridSizeX, gridSizeY];
         for (int x = 0; x < gridSizeX; x++)
         {
@@ -83,7 +93,7 @@ public class NavigationBuildJob : INightJob
                 tempNodeArray[x, y] = tile;
             }
         }
-        
+
         if (bake)
         {
             NavigationWorld navigationWorld1 = navigationWorld;
@@ -103,11 +113,14 @@ public class NavigationBuildJob : INightJob
                             tile.Weight = int.MaxValue;
                             navInstance.Wall[x, y] = true;
                         }
+
                         navInstance.obstacleBuildTime++;
-                        if(delayedObstacleBuild1) 
+                        if (delayedObstacleBuild1 && isPlay)
                             await NightJobManager.Yield(obstacleBuildDelay1);
                     }
                 }
+
+                Debug.Log("[NOK] Obstacle generation completed.");
             });
         }
 
@@ -117,56 +130,55 @@ public class NavigationBuildJob : INightJob
         tileCreationTimer.Stop();
 
         #endregion
-        
+
         tiles = navInstance.Tiles;
-        
+
         #region HeatmapRegion
 
-            heatmapCreationTimer.Start();
-        
-            var target = GetTileFromWorldPoint(targetPosition);
-            target.Weight = 1;
-            Queue<NavigationTile> visitQueue = new Queue<NavigationTile>();
-            visitQueue.Enqueue(target);
-            ProcessNeighbours(1, visitQueue, gridSizeX, gridSizeY);
-            heatmapCreationTimer.Stop();
+        heatmapCreationTimer.Start();
+
+        var target = GetTileFromWorldPoint(targetPosition);
+        target.Weight = 1;
+        Queue<NavigationTile> visitQueue = new Queue<NavigationTile>();
+        visitQueue.Enqueue(target);
+        ProcessNeighbours(1, visitQueue, gridSizeX, gridSizeY);
+        heatmapCreationTimer.Stop();
 
         #endregion
 
         #region FlowFieldRegion
 
-            flowFieldCreationTimer.Start();
+        flowFieldCreationTimer.Start();
 
-            for (int x = 0; x < gridSizeX; x++)
+        for (int x = 0; x < gridSizeX; x++)
+        {
+            for (int y = 0; y < gridSizeY; y++)
             {
-                for (int y = 0; y < gridSizeY; y++)
+                var tile = tiles[x, y];
+                Vector2Int pos = tile.GridPos;
+                Vector2 resultVector = Vector2.zero;
+
+                foreach (var neighbour in tile.GetNeighbours(gridSizeX, gridSizeY, tiles))
                 {
-                    var tile = tiles[x, y];
-                    Vector2Int pos = tile.GridPos;
-                    Vector2 resultVector = Vector2.zero;
-
-                    foreach (var neighbour in tile.GetNeighbours(gridSizeX, gridSizeY, tiles))
+                    switch (neighbour)
                     {
-                        switch (neighbour)
-                        {
-                            case NavigationTile n:
-                                resultVector -= ((Vector2)(n.GridPos - tile.GridPos)).normalized * n.Weight;
-                                break;
-                            case VoidTile v:
-                                resultVector -= ((Vector2)(v.GridPos - tile.GridPos)).normalized * int.MaxValue;
-                                break;
-                        }
-                        
+                        case NavigationTile n:
+                            resultVector -= ((Vector2)(n.GridPos - tile.GridPos)).normalized * n.Weight;
+                            break;
+                        case VoidTile v:
+                            resultVector -= ((Vector2)(v.GridPos - tile.GridPos)).normalized * int.MaxValue;
+                            break;
                     }
-
-                    tile.FlowFieldVector = resultVector.normalized;
                 }
-            }
 
-            flowFieldCreationTimer.Stop();
+                tile.FlowFieldVector = resultVector.normalized;
+            }
+        }
+
+        flowFieldCreationTimer.Stop();
 
         #endregion
-        
+
         navigationWorld.tileCreationTime = tileCreationTimer.Elapsed;
         navigationWorld.heatmapCreationTime = heatmapCreationTimer.Elapsed;
         navigationWorld.flowFieldCreationTime = flowFieldCreationTimer.Elapsed;
@@ -191,10 +203,11 @@ public class NavigationBuildJob : INightJob
                                 n.Weight = ++weight;
                                 navigationWorld.maxWeight = weight;
                             }
+
                             break;
                     }
                 }
-                
+
                 continue;
             }
 
@@ -232,8 +245,8 @@ public class NavigationBuildJob : INightJob
             break;
         }
     }*/
-    
-    
+
+
     public Vector2 GetFlowFieldVector(Vector2 worldPoint)
     {
         Vector2 relativePosition = worldPoint - new Vector2(additionalPosition.x, additionalPosition.z);
@@ -252,15 +265,13 @@ public class NavigationBuildJob : INightJob
     public NavigationTile GetTileFromWorldPoint(Vector3 worldPoint)
     {
         Vector3 relativePosition = worldPoint - additionalPosition;
-        
+
         int x = Mathf.FloorToInt(relativePosition.x / tileDiameter);
         int y = Mathf.FloorToInt(relativePosition.z / tileDiameter);
-        
+
         x = Mathf.Clamp(x, 0, tiles.GetLength(0) - 1);
         y = Mathf.Clamp(y, 0, tiles.GetLength(1) - 1);
-        
+
         return tiles[x, y];
     }
-    
-
 }

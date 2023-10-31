@@ -4,5 +4,5 @@ using UnityEngine;
 [System.Serializable]
 public class PoolDebug
 {
-    public List<Transform> allTransforms;
+    public List<Transform> allTransforms = new List<Transform>();
 }

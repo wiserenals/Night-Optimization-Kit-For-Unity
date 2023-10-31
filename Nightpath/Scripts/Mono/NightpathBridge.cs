@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using DotTrail;
 using Karayel;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ public class NightpathBridge : MonoBehaviour
     private bool _bridgeStarted;
     private int _limit;
     private List<Vector2> agents;
-    private List<Vector2> lastAgents;
+    private List<Vector2> lastAgents = new List<Vector2>();
     private bool BridgeNotAvailable => _bridgeStarted || cullingCamera == null || agentPrefab == null;
     private void Start()
     {
@@ -33,36 +34,43 @@ public class NightpathBridge : MonoBehaviour
         agents = optimizedAgentManager.agents;
         cameraTransform = cullingCamera.transform;
         SpawnPool();
-        new Loop(() => bridgeLoopDelay).Start(BridgeLoop);
+        BridgeJob();
+    }
+
+    /// <summary>
+    /// WARNING: This is a job execution. Do not edit if you don't know about parallel programming.
+    /// </summary>
+    private void BridgeJob()
+    {
+        var closestAgents = new List<Vector2>();
+        Vector3 pos = cameraTransform.position;
+        Dot.Trail.Loop("SecondaryThread", async deltaTime =>
+        {
+            closestAgents = FindClosestPoints(new Vector2(pos.x, pos.z), agents);
+        }, () =>
+        {
+            pos = cameraTransform.position;
+            closestAgents = cullingCamera.CullPositions(closestAgents);
+            for (int i = 0; i < closestAgents.Count; i++)
+            {
+                var agent = closestAgents[i];
+                agentComponents[i].SetNativePosition(new Vector3(agent.x, 0, agent.y));
+            }
+        });
     }
 
     private void SpawnPool()
     {
         agentComponents = cullingCamera
             .cullingPool
-            .Instantiate(agentPrefab, _limit)
+            .Instantiate(agentPrefab, _limit, true)
             .ConvertAll(x => x.GetComponent<IOptimizedAgentComponent>())
             .ToArray();
     }
-    
-    private void BridgeLoop()
-    {
-        var pos = cameraTransform.position;
-        var closestAgents = FindClosestPoints(new Vector2(pos.x, pos.z), agents, _limit);
-        foreach (var exc in closestAgents.Except(lastAgents))
-        {
-            
-        }
-        for (int i = 0; i < _limit; i++)
-        {
-            var agent = closestAgents[i];
-            agentComponents[i].SetNativePosition(new Vector3(agent.x, 0, agent.y));
-        }
-    }
 
-    private List<Vector2> FindClosestPoints(Vector2 target, IEnumerable<Vector2> points, int numPoints)
+    private List<Vector2> FindClosestPoints(Vector2 target, IEnumerable<Vector2> points)
     {
-        return points.OrderBy(point => Vector2.Distance(target, point)).Take(numPoints).ToList();
+        return points.OrderBy(point => Vector2.Distance(target, point)).Take(500).ToList();
     }
 }
 

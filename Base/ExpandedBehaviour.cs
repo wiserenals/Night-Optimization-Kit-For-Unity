@@ -1,10 +1,12 @@
 ﻿using System;
+using Karayel;
 using UnityEngine;
 
 public class ExpandedBehaviour : MonoBehaviour
 {
     public DebuggingSettings debuggingSettings;
     protected static GameReferenceHolder holder;
+    
     protected void Log(string message)
     {
         if(debuggingSettings.messageDebugging) Debugger.WriteLineC(message);

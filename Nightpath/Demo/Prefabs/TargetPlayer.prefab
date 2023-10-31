@@ -185,7 +185,7 @@ MonoBehaviour:
   rigidbody: {fileID: 8205469973443878979}
   crouchTarget: {fileID: 3733632780382247910}
   inputSmoothTime: 0.1
-  jumpForce: {x: 0, y: 9, z: 0}
+  jumpForce: {x: 0, y: 3, z: 0}
   jumpAngleStrength: 0.005
   additionalRunSpeed: 5
   additionalCrouchSpeed: -6.5
