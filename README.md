@@ -7,7 +7,6 @@ Optimize your Unity projects with the Night Optimization Kit. This package conta
 - **NightJob System**: Boost performance with parallel job scheduling.
 - **Nightcull Dynamic Culling**: Optimize scenes using dynamic culling techniques.
 - **DotTrail V2**: DotTrail is now for parallel programming!
-- **NightPath FlowField Pathfinding**: Efficient pathfinding with flow fields.
 - **NightPool**: Manage object pooling for better memory usage.
 
 ## Installation
