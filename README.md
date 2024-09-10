@@ -13,8 +13,4 @@ Optimize your Unity projects with the Night Optimization Kit. This package conta
 
 To use the Night Optimization Kit, simply download the package and import it into your Unity project.
 
-## Contact
-
-If you have any questions or need assistance, you can reach out to us at [yusufemrekarayel@gmail.com](mailto:yusufemrekarayel@gmail.com).
-
 Enjoy optimizing your Unity games with the Night Optimization Kit!
