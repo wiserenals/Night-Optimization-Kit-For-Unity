@@ -6,6 +6,15 @@ Optimize your Unity projects with the Night Optimization Kit. This package conta
 
 ### 🧪 1) Call Activator: <br>
 &emsp;&emsp;&emsp; Easily call frame-based methods less to improve performance!<br>
+```csharp
+CallActivator helloWorldCallActivator = new CallActivator(activateTime: 10);
+void Update()
+{
+    // Log 'hello world' frameRate / activateTime times per second 
+    // (with activateTime set to 10) 
+    helloWorldCallActivator.Request(() => Debug.Log("Hello world!"));
+}
+```
 ### 🧪 2) Instance checks: <br>
 &emsp;&emsp;&emsp; In previous version, there was no way to check if the component has an instance without creating a new instance. <br>
 &emsp;&emsp;&emsp; Now we have .HasInstance() method!<br>
