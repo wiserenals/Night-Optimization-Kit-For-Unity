@@ -6,3 +6,12 @@
         DontDestroyOnLoad(gameObject);
     }
 }
+
+public abstract class SchedulableDontDestroy : SchedulableBehaviour
+{
+    protected virtual void Awake()
+    {
+        if(transform.parent) transform.SetParent(null);
+        DontDestroyOnLoad(gameObject);
+    }
+}

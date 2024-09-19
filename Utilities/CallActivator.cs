@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using DotTrail;
 
 public class CallActivator
@@ -22,7 +23,11 @@ public class CallActivator
         
         currentCall = 0;
         var result = mainThreadAction();
-        if(secondaryThreadAction != null) Dot.Trail.After(async delegate { secondaryThreadAction(result); });
+        if(secondaryThreadAction != null) Dot.Trail.After(delegate
+        {
+            secondaryThreadAction(result);
+            return Task.CompletedTask;
+        });
     }
     
     public void Request(Action mainThreadAction)
@@ -38,6 +43,10 @@ public class CallActivator
         if (++currentCall % activateTime != 0) return;
         
         currentCall = 0;
-        Dot.Trail.After(async delegate { secondaryThreadAction(); });
+        Dot.Trail.After(delegate
+        {
+            secondaryThreadAction();
+            return Task.CompletedTask;
+        });
     }
 }
