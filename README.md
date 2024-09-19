@@ -14,7 +14,6 @@ Optimize your Unity projects with the Night Optimization Kit. This package conta
 &emsp;&emsp;&emsp; - *ProtectedSingletonDontDestroy\<T>*<br>
 &emsp;&emsp;&emsp; - *ForceProtectedSingletonDontDestroy\<T>*<br>
 <br>
----
 
 ## Features
 
@@ -25,16 +24,10 @@ Optimize your Unity projects with the Night Optimization Kit. This package conta
 
 <br>
 
----
-
 ## Installation
 
 To use the Night Optimization Kit, simply download the package and import it into your Unity project.
 
 Enjoy optimizing your Unity games with the Night Optimization Kit!
 
-<br>
-
----
-
-<br><br>
+<br><br><br>
