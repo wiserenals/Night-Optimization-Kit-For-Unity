@@ -70,7 +70,7 @@ Distribute computationally intensive tasks across multiple frames to avoid spike
 
 ```
 
-### EnumerableDiscreteUpdate Example:
+### DiscreteUpdateAttribute Example:
 ```csharp
 using UnityEngine;
 
