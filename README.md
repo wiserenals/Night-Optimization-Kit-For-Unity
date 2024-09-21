@@ -2,6 +2,25 @@
 
 Optimize your Unity projects with the Night Optimization Kit. This package contains a set of powerful tools to enhance your game's performance and efficiency.
 
+# 🧪 *What's new? 9/21/24*
+
+### 🧪 1) FixedCallActivator: <br>
+
+```csharp
+using UnityEngine;
+
+public class TestCode : MonoBehaviour
+{
+    private FixedCallActivator logCallActivator = 
+        new FixedCallActivator(activateTimePerSecond: 50);
+
+    void Update()
+    {
+        logCallActivator.Request(() => Debug.Log("hey")); // 50 'hey' messages after 1 second.
+    }
+    
+}
+```
  
 # 🧪 *What's new? 9/20/24*
 

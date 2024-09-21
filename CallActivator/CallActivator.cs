@@ -1,15 +1,25 @@
 ﻿using System;
 using System.Threading.Tasks;
 using DotTrail;
+using UnityEngine;
 
 public class CallActivator
 {
-    private readonly int activateTime = 5;
-    private int currentCall = 0;
+    protected readonly float activateTime = 5;
+    protected float currentCall = 0;
+
+    protected virtual float increaseRate => 1;
+    protected virtual bool callCheck => currentCall < activateTime;
+    
     
     public CallActivator()
     {
         
+    }
+    
+    protected CallActivator(float activateTime)
+    {
+        this.activateTime = activateTime;
     }
 
     public CallActivator(int activateTime)
@@ -19,7 +29,8 @@ public class CallActivator
 
     public void Request<T>(Func<T> mainThreadAction, Action<T> secondaryThreadAction = null)
     {
-        if (++currentCall % activateTime != 0) return;
+        IncreaseCurrentCall();
+        if (callCheck) return;
         
         currentCall = 0;
         var result = mainThreadAction();
@@ -29,10 +40,16 @@ public class CallActivator
             return Task.CompletedTask;
         });
     }
-    
+
+    private void IncreaseCurrentCall()
+    {
+        currentCall += increaseRate;
+    }
+
     public void Request(Action mainThreadAction)
     {
-        if (++currentCall % activateTime != 0) return;
+        IncreaseCurrentCall();
+        if (callCheck) return;
         
         currentCall = 0;
         mainThreadAction();
@@ -40,7 +57,8 @@ public class CallActivator
     
     public void RequestSec(Action secondaryThreadAction)
     {
-        if (++currentCall % activateTime != 0) return;
+        IncreaseCurrentCall();
+        if (callCheck) return;
         
         currentCall = 0;
         Dot.Trail.After(delegate

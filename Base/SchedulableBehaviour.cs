@@ -54,7 +54,6 @@ public class SchedulableBehaviour : MonoBehaviour
                 enumeratorFrameWaitTime = waitFrames;
             }
         }
-
         // If there are no ordered methods, skip the update logic
         if (!hasOrderedMethods) return;
 
