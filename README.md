@@ -2,6 +2,23 @@
 
 Optimize your Unity projects with the Night Optimization Kit. This package contains a set of powerful tools to enhance your game's performance and efficiency.
 
+## Features
+
+- **NightJob System**: Boost performance with parallel job scheduling.
+- **Nightcull Dynamic Culling**: Optimize scenes using dynamic culling techniques.
+- **DotTrail V2**: DotTrail is now for parallel programming!
+- **NightPool**: Manage object pooling for better memory usage.
+
+<br>
+
+## Installation
+
+To use the Night Optimization Kit, simply download the package and import it into your Unity project.
+
+Enjoy optimizing your Unity games with the Night Optimization Kit!
+
+<br><br><br>
+
 # 🧪 *What's new? 9/21/24*
 
 ### 🧪 1) FixedCallActivator: <br>
@@ -222,20 +239,3 @@ void Update()
 &emsp;&emsp;&emsp; - *ProtectedSingletonDontDestroy\<T>*<br>
 &emsp;&emsp;&emsp; - *ForceProtectedSingletonDontDestroy\<T>*<br>
 <br>
-
-## Features
-
-- **NightJob System**: Boost performance with parallel job scheduling.
-- **Nightcull Dynamic Culling**: Optimize scenes using dynamic culling techniques.
-- **DotTrail V2**: DotTrail is now for parallel programming!
-- **NightPool**: Manage object pooling for better memory usage.
-
-<br>
-
-## Installation
-
-To use the Night Optimization Kit, simply download the package and import it into your Unity project.
-
-Enjoy optimizing your Unity games with the Night Optimization Kit!
-
-<br><br><br>
