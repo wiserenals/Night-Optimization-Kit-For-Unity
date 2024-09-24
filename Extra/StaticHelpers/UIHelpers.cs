@@ -123,7 +123,7 @@ public static class UIHelpers
         return default; // Eğer parent zincirinde T componenti bulunamazsa null döner
     }
 
-    public static void SetOutline(this GameObject gameObject, Color outlineColor, float thickness = 1.0f)
+    /*public static void SetOutline(this GameObject gameObject, Color outlineColor, float thickness = 1.0f)
     {
         // Get or add an Outline component
         var outline = gameObject.GetComponentInPrimaryChildren<UIOutline>();
@@ -141,7 +141,7 @@ public static class UIHelpers
     {
         var outline = gameObject.GetComponentInPrimaryChildren<UIOutline>();
         if (outline) outline.enabled = false;
-    }
+    }*/
     
     public static void Align(this RectTransform rectTransform, RectAnchor anchor)
     {

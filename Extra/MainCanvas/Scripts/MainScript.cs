@@ -7,8 +7,8 @@ using UnityEngine.UI;
 public class MainScript : SingletonDontDestroy<MainScript>
 {
     public GraphicRaycaster mainRaycaster;
-    public UIOutline outlinePrefab;
-    public ColorSelector colorSelector;
+    /*public UIOutline outlinePrefab;*/
+    /*public ColorSelector colorSelector;*/
     public ElementPickerPanel elementPicker;
     public GameConsole gameConsole;
 
@@ -26,6 +26,7 @@ public class MainScript : SingletonDontDestroy<MainScript>
         elementPicker.Show(list);
     }
     
+    /*
     public void SelectColor(Action<Color> onColorChanged, Action<Color> onEndEdit = null)
     {
         if (colorSelector.gameObject.activeSelf) return;
@@ -45,6 +46,7 @@ public class MainScript : SingletonDontDestroy<MainScript>
             
         });
     }
+    */
 
 
 

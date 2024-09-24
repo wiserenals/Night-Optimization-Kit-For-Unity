@@ -9,7 +9,7 @@
 
 public abstract class SchedulableDontDestroy : SchedulableBehaviour
 {
-    protected virtual void Awake()
+    protected override void Awake()
     {
         if(transform.parent) transform.SetParent(null);
         DontDestroyOnLoad(gameObject);

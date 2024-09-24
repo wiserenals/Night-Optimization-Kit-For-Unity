@@ -19,6 +19,42 @@ Enjoy optimizing your Unity games with the Night Optimization Kit!
 
 <br><br><br>
 
+# 🧪 *What's new? 9/24/24*
+
+### 🧪 1) GlobalDiscreteUpdateAttribute: <br>
+This code logs same frame number in same frame. <br>
+If one of them ordered with 1 (or something different) they will log different frame numbers.
+```csharp
+public class TestCode : SchedulableBehaviour
+{
+    public static int frames = 0;
+    [DiscreteUpdate(0)]
+    void StandardUpdate()
+    {
+        frames++;
+    }
+    
+    [GlobalDiscreteUpdate(0)]
+    void Update1()
+    {
+        Debug.Log("1: " + frames);
+    }
+}
+
+public class TestCode2 : SchedulableBehaviour
+{
+    [GlobalDiscreteUpdate(0)]
+    void Update2()
+    {
+        Debug.Log("2: " + TestCode.frames);
+    }
+}
+```
+### 🧪 2) DiscreteFixedUpdateAttribute, GlobalDiscreteFixedUpdateAttribute and EnumerableDiscreteFixedUpdate added. <br>
+
+### 🧪 3) Bugfixes. <br>
+### 🧪 4) Performance optimization. <br>
+
 # 🧪 *What's new? 9/21/24*
 
 ### 🧪 1) FixedCallActivator: <br>
@@ -158,7 +194,7 @@ public class CharacterController : SchedulableBehaviour
 }
 ```
 
-### 🧪 2) Implemented all singleton types for SchedulableBehaviour <br>
+### 🧪 2) Implemented all singleton types for SchedulableBehaviour. <br>
 ### 🧪 3) "lacks await..." warning fixed. <br>
 
 # 🧪 *What's new? 9/19/24*

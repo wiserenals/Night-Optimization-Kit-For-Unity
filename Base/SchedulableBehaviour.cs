@@ -17,29 +17,56 @@ public class SchedulableBehaviour : MonoBehaviour
             return elapsed;
         }
     }
-    private readonly List<MethodInfo> orderedMethods;
+    private List<List<MethodObject>> orderedMethods = new List<List<MethodObject>>();
+    private List<List<MethodObject>> orderedFixedMethods = new List<List<MethodObject>>();
     private readonly bool hasOrderedMethods;
+    private readonly bool hasOrderedFixedMethods;
     private int currentFrame = -1;
+    private int currentFixedFrame = -1;
     private IEnumerator updateEnumerator;
+    private IEnumerator fixedUpdateEnumerator;
     private int enumeratorFrameWaitTime;
+    private int fixedEnumeratorFrameWaitTime;
     private readonly bool isEnumerableDiscreteUpdateUsing;
+    private readonly bool isEnumerableDiscreteFixedUpdateUsing;
 
     public SchedulableBehaviour()
     {
-        var methods = GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+        #region OrderLocalDiscreteUpdates
         
-        // Sort the methods based on their order
-        orderedMethods = methods
-            .OrderByWithoutNegatives(m => m.GetCustomAttribute<DiscreteUpdateAttribute>()?.order ?? -1).ToList();
-
-        // Set boolean flag to avoid checking the list count each time
+        var methods = GetType()
+            .GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+        
+        orderedMethods.Add(methods.ToList().ConvertToMethodObjects<DiscreteUpdateAttribute>(this));
+        orderedMethods = orderedMethods.CorrectAllMO();
+        
         hasOrderedMethods = orderedMethods.Count > 0;
+        
+        orderedFixedMethods.Add(methods.ToList().ConvertToMethodObjects<DiscreteFixedUpdateAttribute>(this));
+        orderedFixedMethods = orderedFixedMethods.CorrectAllMO();
+        
+        hasOrderedFixedMethods = orderedFixedMethods.Count > 0;
+        
+        #endregion
+
         isEnumerableDiscreteUpdateUsing = this.HasOverride(nameof(EnumerableDiscreteUpdate));
+        isEnumerableDiscreteFixedUpdateUsing = this.HasOverride(nameof(EnumerableDiscreteFixedUpdate));
     }
 
-    private void Start()
+    protected virtual void Awake()
     {
+        #region OrderGlobalDiscreteUpdates
+        
+        var globalMethods = GetType()
+            .GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+        
+        GlobalDiscreteUpdateManager.Instance.Add(
+            globalMethods.ToList().ConvertToMethodObjects<GlobalDiscreteUpdateAttribute>(this));
+
+        #endregion
+        
         updateEnumerator = EnumerableDiscreteUpdate();
+        fixedUpdateEnumerator = EnumerableDiscreteFixedUpdate();
     }
 
     protected virtual void Update()
@@ -54,27 +81,78 @@ public class SchedulableBehaviour : MonoBehaviour
                 enumeratorFrameWaitTime = waitFrames;
             }
         }
-        // If there are no ordered methods, skip the update logic
+
         if (!hasOrderedMethods) return;
+        
+        orderedMethods[currentFrame = (currentFrame + 1) % orderedMethods.Count].CallAll();
+    }
 
-        // Find the method to execute for this frame
-        MethodInfo methodToInvoke = orderedMethods[currentFrame = (currentFrame + 1) % orderedMethods.Count];
-
-        // Invoke the method
-        methodToInvoke.Invoke(this, null);
+    protected virtual void FixedUpdate()
+    {
+        if (isEnumerableDiscreteFixedUpdateUsing && --fixedEnumeratorFrameWaitTime <= 0)
+        {
+            if(!fixedUpdateEnumerator.MoveNext()) (fixedUpdateEnumerator = EnumerableDiscreteFixedUpdate()).MoveNext();
+            if (fixedUpdateEnumerator.Current is int waitFrames)
+            {
+                fixedEnumeratorFrameWaitTime = waitFrames;
+            }
+        }
+        
+        if (!hasOrderedFixedMethods) return;
+        orderedFixedMethods[currentFixedFrame = (currentFixedFrame + 1) % orderedFixedMethods.Count].CallAll();
     }
 
     protected virtual IEnumerator EnumerableDiscreteUpdate()
     {
         yield return 9999;
     }
+    
+    protected virtual IEnumerator EnumerableDiscreteFixedUpdate()
+    {
+        yield return 9999;
+    }
 }
 
 [AttributeUsage(AttributeTargets.Method)]
-internal class DiscreteUpdateAttribute : Attribute
+internal class DiscreteUpdateAttribute : UpdateBaseAttribute
 {
-    public int order;
-    public DiscreteUpdateAttribute(int order)
+    public DiscreteUpdateAttribute(int order) : base(order)
+    {
+        
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method)]
+internal class DiscreteFixedUpdateAttribute : UpdateBaseAttribute
+{
+    public DiscreteFixedUpdateAttribute(int order) : base(order)
+    {
+        
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method)]
+internal class GlobalDiscreteFixedUpdateAttribute : UpdateBaseAttribute
+{
+    public GlobalDiscreteFixedUpdateAttribute(int order) : base(order)
+    {
+
+    }
+}
+
+[AttributeUsage(AttributeTargets.Method)]
+internal class GlobalDiscreteUpdateAttribute : UpdateBaseAttribute
+{
+    public GlobalDiscreteUpdateAttribute(int order) : base(order)
+    {
+
+    }
+}
+
+public class UpdateBaseAttribute : Attribute
+{
+    public readonly int order;
+    public UpdateBaseAttribute(int order)
     {
         this.order = order;
     }
