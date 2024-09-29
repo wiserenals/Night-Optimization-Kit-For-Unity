@@ -50,6 +50,13 @@ namespace DotTrail
             return this;
         }
         
+        public Dot After(Func<Task> secondaryThreadTask)
+        {
+            _currentQueue.AddJobToQueue(
+                new TaskJob(secondaryThreadTask));
+            return this;
+        }
+        
         public Dot After(Action<List<object>> mainThreadActionWithContainer, Action<List<object>> secondaryThreadActionWithContainer)
         {
             _currentQueue.AddJobToQueue(
@@ -213,6 +220,21 @@ namespace DotTrail
             _loopHolder.Clear();
             _instance = null;
             NightJobManager.Dispose();
+        }
+        
+        public static Task DummyTask(Action secondaryThread)
+        {
+            var task = Task.Run(secondaryThread);
+            task.ContinueWith((task1) =>
+            {
+                if (task1.Exception == null) return;
+                foreach (var ex in task1.Exception.InnerExceptions)
+                {
+                    Debug.LogException(ex);
+                }
+            }, TaskContinuationOptions.OnlyOnFaulted);
+            
+            return task;
         }
     }
 

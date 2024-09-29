@@ -59,7 +59,7 @@ public class ForceSingleton<T> : ExpandedBehaviour where T : ExpandedBehaviour
             if (_instance == null)
             {
                 _instance = FindObjectOfType<T>(true);
-                if (_instance == null) _instance = new GameObject().AddComponent<T>();
+                if (_instance == null) _instance = new GameObject(typeof(T).Name).AddComponent<T>();
             }
             return _instance;
         }
@@ -84,7 +84,7 @@ public class ForceSingletonDontDestroy<T> : DontDestroy where T : ExpandedBehavi
             if (_instance == null)
             {
                 _instance = FindObjectOfType<T>(true);
-                if (_instance == null) _instance = new GameObject().AddComponent<T>();
+                if (_instance == null) _instance = new GameObject(typeof(T).Name).AddComponent<T>();
             }
             return _instance;
         }
@@ -151,7 +151,7 @@ public class ForceProtectedSingleton<T> : ExpandedBehaviour where T : ExpandedBe
             if (_instance == null)
             {
                 _instance = FindObjectOfType<T>(true);
-                if (_instance == null) _instance = new GameObject(typeof(T).Name + " (Force created)").AddComponent<T>();
+                if (_instance == null) _instance = new GameObject(typeof(T).Name).AddComponent<T>();
             }
             return _instance;
         }
@@ -177,7 +177,7 @@ public class ForceProtectedSingletonDontDestroy<T> : DontDestroy where T : Expan
             if (_instance == null)
             {
                 _instance = FindObjectOfType<T>(true);
-                if (_instance == null) _instance = new GameObject(typeof(T).Name + " (Force created)").AddComponent<T>();
+                if (_instance == null) _instance = new GameObject(typeof(T).Name).AddComponent<T>();
             }
             return _instance;
         }
@@ -334,7 +334,7 @@ public class ForceProtectedSingletonSchedulable<T> : SchedulableBehaviour where 
             if (_instance == null)
             {
                 _instance = FindObjectOfType<T>(true);
-                if (_instance == null) _instance = new GameObject(typeof(T).Name + " (Force created)").AddComponent<T>();
+                if (_instance == null) _instance = new GameObject(typeof(T).Name).AddComponent<T>();
             }
             return _instance;
         }
@@ -359,7 +359,7 @@ public class ForceProtectedSingletonSchedulableDontDestroy<T> : DontDestroy wher
             if (_instance == null)
             {
                 _instance = FindObjectOfType<T>(true);
-                if (_instance == null) _instance = new GameObject(typeof(T).Name + " (Force created)").AddComponent<T>();
+                if (_instance == null) _instance = new GameObject(typeof(T).Name).AddComponent<T>();
             }
             return _instance;
         }

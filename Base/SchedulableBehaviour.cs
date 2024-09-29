@@ -29,9 +29,14 @@ public class SchedulableBehaviour : MonoBehaviour
     private int fixedEnumeratorFrameWaitTime;
     private readonly bool isEnumerableDiscreteUpdateUsing;
     private readonly bool isEnumerableDiscreteFixedUpdateUsing;
+    protected bool allowUpdateToComeBack = true;
+    protected bool allowFixedUpdateToComeBack = true;
 
     public SchedulableBehaviour()
     {
+        allowUpdateToComeBack = true;
+        allowFixedUpdateToComeBack = true;
+
         #region OrderLocalDiscreteUpdates
         
         var methods = GetType()
@@ -39,6 +44,7 @@ public class SchedulableBehaviour : MonoBehaviour
         
         orderedMethods.Add(methods.ToList().ConvertToMethodObjects<DiscreteUpdateAttribute>(this));
         orderedMethods = orderedMethods.CorrectAllMO();
+        
         
         hasOrderedMethods = orderedMethods.Count > 0;
         
@@ -52,6 +58,21 @@ public class SchedulableBehaviour : MonoBehaviour
         isEnumerableDiscreteUpdateUsing = this.HasOverride(nameof(EnumerableDiscreteUpdate));
         isEnumerableDiscreteFixedUpdateUsing = this.HasOverride(nameof(EnumerableDiscreteFixedUpdate));
     }
+    
+    private void OnEnable()
+    {
+        currentFrame = -1;
+        currentFixedFrame = -1;
+        allowUpdateToComeBack = true;
+    }
+    
+    private void Reset()
+    {
+        currentFrame = -1;
+        currentFixedFrame = -1;
+        allowUpdateToComeBack = true;
+    }
+
 
     protected virtual void Awake()
     {
@@ -64,34 +85,50 @@ public class SchedulableBehaviour : MonoBehaviour
             globalMethods.ToList().ConvertToMethodObjects<GlobalDiscreteUpdateAttribute>(this));
 
         #endregion
-        
-        updateEnumerator = EnumerableDiscreteUpdate();
-        fixedUpdateEnumerator = EnumerableDiscreteFixedUpdate();
     }
 
+    private IEnumerator subEnumerator;
     protected virtual void Update()
     {
         _frameTimeElapsed++;
         
-        if (isEnumerableDiscreteUpdateUsing && --enumeratorFrameWaitTime <= 0)
+        if (isEnumerableDiscreteUpdateUsing)
         {
-            if(!updateEnumerator.MoveNext()) (updateEnumerator = EnumerableDiscreteUpdate()).MoveNext();
-            if (updateEnumerator.Current is int waitFrames)
+            if (subEnumerator != null && subEnumerator.MoveNext())
             {
-                enumeratorFrameWaitTime = waitFrames;
+                
             }
+            else if (--enumeratorFrameWaitTime <= 0)
+            {
+                if(updateEnumerator == null || !updateEnumerator.MoveNext()) 
+                    (updateEnumerator = EnumerableDiscreteUpdate()).MoveNext();
+                if (updateEnumerator.Current is int waitFrames)
+                {
+                    enumeratorFrameWaitTime = waitFrames;
+                }
+
+                if (updateEnumerator.Current is IEnumerator enumerator)
+                {
+                    subEnumerator = enumerator;
+                }
+            }
+
         }
 
         if (!hasOrderedMethods) return;
-        
+         
+        if (currentFrame == orderedMethods.Count - 1 && !allowUpdateToComeBack) return;
+
         orderedMethods[currentFrame = (currentFrame + 1) % orderedMethods.Count].CallAll();
+
     }
 
     protected virtual void FixedUpdate()
     {
         if (isEnumerableDiscreteFixedUpdateUsing && --fixedEnumeratorFrameWaitTime <= 0)
         {
-            if(!fixedUpdateEnumerator.MoveNext()) (fixedUpdateEnumerator = EnumerableDiscreteFixedUpdate()).MoveNext();
+            if(fixedUpdateEnumerator == null || !fixedUpdateEnumerator.MoveNext()) 
+                (fixedUpdateEnumerator = EnumerableDiscreteFixedUpdate()).MoveNext();
             if (fixedUpdateEnumerator.Current is int waitFrames)
             {
                 fixedEnumeratorFrameWaitTime = waitFrames;
@@ -99,7 +136,15 @@ public class SchedulableBehaviour : MonoBehaviour
         }
         
         if (!hasOrderedFixedMethods) return;
-        orderedFixedMethods[currentFixedFrame = (currentFixedFrame + 1) % orderedFixedMethods.Count].CallAll();
+        
+        currentFixedFrame++;
+        if (currentFixedFrame >= orderedFixedMethods.Count)
+        {
+            if (!allowFixedUpdateToComeBack) return;
+            currentFixedFrame = 0;
+        }
+        
+        orderedFixedMethods[currentFixedFrame].CallAll();
     }
 
     protected virtual IEnumerator EnumerableDiscreteUpdate()
