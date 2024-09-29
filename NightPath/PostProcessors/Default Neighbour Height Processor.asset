@@ -15,4 +15,4 @@ MonoBehaviour:
   secondaryThread: 1
   heightDifferenceFactor: 1
   minHeightDifference: 1.5
-  heightWeightBias: 0.99
+  heightWeightBias: 0.913
